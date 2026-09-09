@@ -1,9 +1,9 @@
 /**
  * ============================================================================
- * JS CODE QUEST - TRILHA DE 10 DESAFIOS COM DESBLOQUEIO SEQUENCIAL
+ * JS CODE QUEST - TRILHA DE 10 DESAFIOS COM TEST RUNNER ESTILO JEST
  * ============================================================================
- * Aplicação cliente pura (frontend) com Monaco Editor, execução com new Function,
- * suíte de testes unitários isolados e persistência local via localStorage.
+ * Ambiente de desenvolvimento com Monaco Editor, execução dinâmica e
+ * terminal integrado que renderiza os resultados dos testes no formato do Jest.
  */
 
 /* ============================================================================
@@ -289,12 +289,11 @@ const State = {
       this.completed = savedCompleted ? JSON.parse(savedCompleted) : [];
       this.currentId = savedCurrentId ? parseInt(savedCurrentId, 10) : 1;
 
-      // Garantir limites válidos
       if (isNaN(this.unlockedMax) || this.unlockedMax < 1) this.unlockedMax = 1;
       if (this.unlockedMax > CHALLENGES.length) this.unlockedMax = CHALLENGES.length;
       if (this.currentId > this.unlockedMax) this.currentId = this.unlockedMax;
     } catch (e) {
-      console.warn("Erro ao ler dados do localStorage, usando valores padrão.", e);
+      console.warn("Erro ao ler dados do localStorage:", e);
       this.unlockedMax = 1;
       this.completed = [];
       this.currentId = 1;
@@ -307,16 +306,14 @@ const State = {
       localStorage.setItem(STORAGE_KEYS.COMPLETED, JSON.stringify(this.completed));
       localStorage.setItem(STORAGE_KEYS.CURRENT_ID, this.currentId.toString());
     } catch (e) {
-      console.warn("Erro ao salvar dados no localStorage.", e);
+      console.warn("Erro ao salvar dados no localStorage:", e);
     }
   },
 
   saveCode(challengeId, code) {
     try {
       localStorage.setItem(STORAGE_KEYS.CODE_PREFIX + challengeId, code);
-    } catch (e) {
-      console.warn("Erro ao salvar código no localStorage.", e);
-    }
+    } catch (e) {}
   },
 
   getCode(challengeId) {
@@ -353,7 +350,6 @@ const State = {
     if (!this.completed.includes(id)) {
       this.completed.push(id);
     }
-    // Desbloqueia o próximo se for o desafio máximo atual
     if (id === this.unlockedMax && this.unlockedMax < CHALLENGES.length) {
       this.unlockedMax++;
     }
@@ -382,7 +378,7 @@ const dom = {
   challengeTitle: document.getElementById("challenge-title"),
   challengeBody: document.getElementById("challenge-body"),
 
-  // Painel Direito (Editor & Terminal)
+  // Painel Direito
   monacoContainer: document.getElementById("monaco-container"),
   editorTabName: document.getElementById("editor-tab-name"),
   editorSavedStatus: document.getElementById("editor-saved-status"),
@@ -398,25 +394,22 @@ const dom = {
   challengeGrid: document.getElementById("challenge-grid")
 };
 
-/* ============================================================================
-   4. RENDERIZADOR DE INSTRUÇÕES DO DESAFIO
-   ============================================================================ */
 function getCurrentChallenge() {
   return CHALLENGES.find(c => c.id === State.currentId) || CHALLENGES[0];
 }
 
+/* ============================================================================
+   4. RENDERIZAÇÃO DAS INSTRUÇÕES DO DESAFIO
+   ============================================================================ */
 function renderChallengeInstructions(challenge) {
-  // 1. Badges do topo
   dom.badgesGroup.innerHTML = `
     <span class="badge badge-difficulty">${challenge.difficulty}</span>
     <span class="badge badge-lang">JavaScript</span>
     ${challenge.tags.map(t => `<span class="badge badge-topic">${t}</span>`).join("")}
   `;
 
-  // 2. Título
   dom.challengeTitle.textContent = `${challenge.id}. ${challenge.title}`;
 
-  // 3. Montagem do corpo de regras e tabela de testes
   const rulesHtml = challenge.rules.map(r => `<li>${r}</li>`).join("");
 
   const tableRowsHtml = challenge.testCases.map(tc => {
@@ -482,12 +475,11 @@ function renderChallengeInstructions(challenge) {
     </div>
   `;
 
-  // Atualiza nome da aba do editor
   dom.editorTabName.textContent = `${challenge.functionName}.js`;
 }
 
 /* ============================================================================
-   5. ATUALIZAÇÃO DA INTERFACE GERAL (STEPPER, PROGRESSO, MODAL)
+   5. ATUALIZAÇÃO DA UI GERAL
    ============================================================================ */
 function updateUiState() {
   const current = getCurrentChallenge();
@@ -495,23 +487,17 @@ function updateUiState() {
   const completedCount = State.completed.length;
   const percentage = Math.round((completedCount / total) * 100);
 
-  // Barra de Progresso
   dom.progressPercentage.textContent = `${percentage}% (${completedCount}/${total})`;
   dom.progressBarFill.style.width = `${percentage}%`;
 
-  // Resumo do Desafio Atual
   const isCurCompleted = State.isCompleted(current.id);
-  const statusIcon = isCurCompleted ? "✅" : "🔓";
   dom.currentSummaryText.textContent = `Desafio ${current.id} de ${total}: ${current.title}`;
-  dom.currentStatusDot.textContent = statusIcon;
+  dom.currentStatusDot.textContent = isCurCompleted ? "✅" : "🔓";
 
-  // Botões de Navegação Anterior / Próximo
   dom.prevBtn.disabled = current.id <= 1;
-  // O botão próximo só fica habilitado se o próximo desafio já estiver desbloqueado!
   const nextId = current.id + 1;
   dom.nextBtn.disabled = nextId > total || !State.isUnlocked(nextId);
 
-  // Atualiza Modal do Roadmap
   renderRoadmapGrid();
 }
 
@@ -541,9 +527,7 @@ function renderRoadmapGrid() {
       badgeClass = "badge-fail";
     }
 
-    if (isActive) {
-      cardClass += " active-card";
-    }
+    if (isActive) cardClass += " active-card";
 
     const card = document.createElement("div");
     card.className = cardClass;
@@ -572,7 +556,7 @@ function renderRoadmapGrid() {
 }
 
 /* ============================================================================
-   6. TROCA DE DESAFIO & SINCRONIZAÇÃO COM MONACO
+   6. TROCA DE DESAFIO
    ============================================================================ */
 function switchToChallenge(targetId) {
   if (targetId < 1 || targetId > CHALLENGES.length) return;
@@ -581,34 +565,25 @@ function switchToChallenge(targetId) {
     return;
   }
 
-  // 1. Salva código atual antes de trocar
   if (monacoEditorInstance) {
     State.saveCode(State.currentId, monacoEditorInstance.getValue());
   }
 
-  // 2. Atualiza estado para o novo desafio
   State.currentId = targetId;
   State.save();
 
   const challenge = getCurrentChallenge();
-
-  // 3. Renderiza instruções
   renderChallengeInstructions(challenge);
 
-  // 4. Carrega código salvo ou inicial no editor
   if (monacoEditorInstance) {
     const savedCode = State.getCode(challenge.id);
     const codeToLoad = savedCode !== null ? savedCode : challenge.initialCode;
     monacoEditorInstance.setValue(codeToLoad);
   }
 
-  // 5. Atualiza UI e limpa terminal
   updateUiState();
-  clearTerminal();
-  appendTerminalLine(
-    "text-muted",
-    `Carregado: <strong>Desafio ${challenge.id} - ${challenge.title}</strong>.\nEdite sua solução e pressione "▶ Executar Testes" (ou Ctrl+Enter).`
-  );
+  // Executa os testes automaticamente para renderizar o output do Jest de imediato
+  executeTestSuite();
 }
 
 /* ============================================================================
@@ -617,7 +592,7 @@ function switchToChallenge(targetId) {
 function initMonaco() {
   if (typeof require === "undefined") {
     console.error("RequireJS não foi carregado.");
-    appendTerminalLine("log-error", "Erro ao carregar RequireJS para o Monaco Editor.");
+    renderRawTerminalError("Erro ao carregar RequireJS para o editor.");
     return;
   }
 
@@ -638,7 +613,7 @@ function initMonaco() {
       theme: "vs-dark",
       automaticLayout: true,
       fontSize: 13.5,
-      fontFamily: "'Fira Code', Consolas, 'Courier New', monospace",
+      fontFamily: "'Fira Code', Consolas, Monaco, 'Courier New', monospace",
       fontLigatures: true,
       tabSize: 2,
       minimap: { enabled: false },
@@ -649,24 +624,23 @@ function initMonaco() {
       padding: { top: 12, bottom: 12 }
     });
 
-    // Auto-save no Monaco ao digitar
     monacoEditorInstance.onDidChangeModelContent(() => {
       State.saveCode(State.currentId, monacoEditorInstance.getValue());
       dom.editorSavedStatus.textContent = "salvo";
     });
 
-    // Atalho Ctrl+Enter (ou Cmd+Enter) para rodar testes
     monacoEditorInstance.addCommand(
       monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
       executeTestSuite
     );
 
-    console.log("Monaco Editor inicializado.");
+    // Executa imediatamente para exibir os resultados dos testes estilo Jest no console
+    executeTestSuite();
   });
 }
 
 /* ============================================================================
-   8. SISTEMA DE LOGS & TERMINAL
+   8. TEST RUNNER EM FORMATO JEST
    ============================================================================ */
 function clearTerminal() {
   dom.terminalOutput.innerHTML = "";
@@ -679,17 +653,9 @@ function updateStatusDot(status) {
   if (status === "failed") dom.terminalStatusDot.classList.add("failed");
 }
 
-function appendTerminalLine(className, htmlContent) {
-  const line = document.createElement("div");
-  line.className = `terminal-line ${className}`;
-  line.innerHTML = htmlContent;
-  dom.terminalOutput.appendChild(line);
-  dom.terminalOutput.scrollTop = dom.terminalOutput.scrollHeight;
-}
-
 function formatValue(val) {
   if (typeof val === "string") return `"${val}"`;
-  if (typeof val === "number") return val;
+  if (typeof val === "number") return String(val);
   if (typeof val === "boolean") return val ? "true" : "false";
   if (val === undefined) return "undefined";
   if (val === null) return "null";
@@ -698,14 +664,13 @@ function formatValue(val) {
 
 function isValueEqual(actual, expected) {
   if (typeof actual === "number" && typeof expected === "number") {
-    // Epsilon seguro para floats (ex: 50.50 * 0.8 = 40.400000000000006)
     return Math.abs(actual - expected) < 0.0001;
   }
   return actual === expected;
 }
 
-function escapeHtml(string) {
-  return String(string)
+function escapeHtml(str) {
+  return String(str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -713,140 +678,277 @@ function escapeHtml(string) {
     .replace(/'/g, "&#039;");
 }
 
-/* ============================================================================
-   9. EXECUÇÃO DOS TESTES & DESBLOQUEIO SEQUENCIAL
-   ============================================================================ */
-function executeTestSuite() {
-  if (!monacoEditorInstance) {
-    alert("O editor ainda está inicializando. Aguarde um instante.");
-    return;
-  }
+function renderRawTerminalError(msg) {
+  dom.terminalOutput.innerHTML = `<div style="color: #f85149; font-family: var(--font-code); padding: 8px;">${escapeHtml(msg)}</div>`;
+}
 
-  clearTerminal();
+/**
+ * Executa a suíte de testes com medição de tempo e saída formatada idêntica ao Jest
+ */
+function executeTestSuite() {
+  if (!monacoEditorInstance) return;
 
   const challenge = getCurrentChallenge();
   const code = monacoEditorInstance.getValue();
-  const timestamp = new Date().toLocaleTimeString();
+  const fileName = `${challenge.functionName}.test.js`;
 
-  appendTerminalLine(
-    "log-info",
-    `[${timestamp}] 🚀 Executando testes para "${challenge.title}"...\n`
-  );
+  const startTime = performance.now();
 
-  let compiledFn;
+  let compiledFn = null;
+  let compileError = null;
 
-  // 1. Compilação e Extração Dinâmica com new Function()
+  // 1. Compilação isolada com new Function()
   try {
     const wrappedCode = `
       "use strict";
       ${code};
       if (typeof ${challenge.functionName} !== 'function') {
-        throw new ReferenceError("A função '${challenge.functionName}' não foi encontrada ou não é uma função válida.");
+        throw new ReferenceError("A função '${challenge.functionName}' não foi declarada ou não é uma função.");
       }
       return ${challenge.functionName};
     `;
-
     const factory = new Function(wrappedCode);
     compiledFn = factory();
-  } catch (compileError) {
+  } catch (err) {
+    compileError = err;
+  }
+
+  // Se houver erro de compilação/sintaxe, exibe o Jest Test suite failed to run
+  if (compileError) {
     updateStatusDot("failed");
-    appendTerminalLine(
-      "log-error",
-      `<span class="badge-tag badge-err">ERRO DE SINTAXE / COMPILAÇÃO</span>\n${escapeHtml(compileError.name)}: ${escapeHtml(compileError.message)}`
-    );
+    const totalTimeSec = ((performance.now() - startTime) / 1000).toFixed(3);
+
+    dom.terminalOutput.innerHTML = `
+      <div class="jest-report">
+        <div class="jest-suite-header">
+          <span class="jest-badge-fail">FAIL</span>
+          <span class="jest-file-path">${fileName}</span>
+        </div>
+
+        <div class="jest-failure-block">
+          <div class="jest-failure-title">● Test suite failed to run</div>
+          <div style="color: #f85149; margin-top: 4px;">
+            ${escapeHtml(compileError.name)}: ${escapeHtml(compileError.message)}
+          </div>
+          <div style="color: #8b949e; font-size: 11px; margin-top: 8px;">
+            Verifique se a função <code>function ${challenge.functionName}()</code> foi declarada corretamente sem erros de sintaxe.
+          </div>
+        </div>
+
+        <div class="jest-summary">
+          <div class="jest-summary-line">
+            <span class="jest-summary-label">Test Suites:</span>
+            <span class="jest-val-red">1 failed</span>, 1 total
+          </div>
+          <div class="jest-summary-line">
+            <span class="jest-summary-label">Tests:</span>
+            <span class="jest-val-muted">0 passed, ${challenge.testCases.length} total</span>
+          </div>
+          <div class="jest-summary-line">
+            <span class="jest-summary-label">Snapshots:</span>
+            <span class="jest-val-muted">0 total</span>
+          </div>
+          <div class="jest-summary-line">
+            <span class="jest-summary-label">Time:</span>
+            <span class="jest-val-muted">${totalTimeSec} s</span>
+          </div>
+          <div class="jest-footer-ran">Ran all test suites matching /${challenge.functionName}/i.</div>
+        </div>
+      </div>
+    `;
+    dom.terminalOutput.scrollTop = 0;
     return;
   }
 
-  // 2. Execução dos Casos de Teste Unitários
+  // 2. Execução dos Casos de Teste
   let passedCount = 0;
-  const totalCount = challenge.testCases.length;
+  let failedCount = 0;
+  const testResults = [];
+  const failuresDetail = [];
 
   challenge.testCases.forEach((tc) => {
-    try {
-      const result = compiledFn(...tc.args);
-      const argsFormatted = tc.args.map(formatValue).join(", ");
-      const isPassed = isValueEqual(result, tc.expected);
+    const tStart = performance.now();
+    let receivedVal;
+    let runError = null;
 
-      if (isPassed) {
-        passedCount++;
-        appendTerminalLine(
-          "log-success",
-          `<span class="badge-tag badge-pass">PASSOU</span> Teste ${tc.id}: ${challenge.functionName}(${argsFormatted}) ➔ Retornou: <strong>${formatValue(result)}</strong>`
-        );
-      } else {
-        appendTerminalLine(
-          "log-failure",
-          `<span class="badge-tag badge-fail">FALHOU</span> Teste ${tc.id}: ${challenge.functionName}(${argsFormatted})\n` +
-          `       ➔ Esperado: <strong>${formatValue(tc.expected)}</strong>\n` +
-          `       ➔ Recebido: <strong>${formatValue(result)}</strong>`
-        );
-      }
-    } catch (runtimeError) {
-      const argsFormatted = tc.args.map(formatValue).join(", ");
-      appendTerminalLine(
-        "log-error",
-        `<span class="badge-tag badge-err">ERRO EM EXECUÇÃO</span> Teste ${tc.id} (${argsFormatted}):\n` +
-        `       ${escapeHtml(runtimeError.name)}: ${escapeHtml(runtimeError.message)}`
-      );
+    try {
+      receivedVal = compiledFn(...tc.args);
+    } catch (e) {
+      runError = e;
+    }
+
+    const tDurationMs = Math.max(1, Math.round(performance.now() - tStart));
+    const passed = !runError && isValueEqual(receivedVal, tc.expected);
+
+    if (passed) {
+      passedCount++;
+      testResults.push({
+        status: "pass",
+        desc: tc.desc,
+        duration: tDurationMs
+      });
+    } else {
+      failedCount++;
+      testResults.push({
+        status: "fail",
+        desc: tc.desc,
+        duration: tDurationMs
+      });
+
+      failuresDetail.push({
+        desc: tc.desc,
+        args: tc.args,
+        expected: tc.expected,
+        received: runError ? `RuntimeError: ${runError.message}` : receivedVal
+      });
     }
   });
 
-  appendTerminalLine("terminal-line", "");
+  const allPassed = failedCount === 0;
+  const totalTimeSec = ((performance.now() - startTime) / 1000).toFixed(3);
 
-  // 3. Validação do Resultado & Desbloqueio
-  if (passedCount === totalCount) {
+  // 3. Montagem do HTML no padrão Jest
+  const suiteBadge = allPassed
+    ? `<span class="jest-badge-pass">PASS</span>`
+    : `<span class="jest-badge-fail">FAIL</span>`;
+
+  // Linhas individuais de cada teste
+  const testRowsHtml = testResults.map(tr => {
+    if (tr.status === "pass") {
+      return `
+        <div class="jest-test-row">
+          <span class="jest-icon-pass">✓</span>
+          <span class="jest-desc-pass">${escapeHtml(tr.desc)}</span>
+          <span class="jest-duration">(${tr.duration} ms)</span>
+        </div>
+      `;
+    } else {
+      return `
+        <div class="jest-test-row">
+          <span class="jest-icon-fail">✕</span>
+          <span class="jest-desc-fail">${escapeHtml(tr.desc)}</span>
+          <span class="jest-duration">(${tr.duration} ms)</span>
+        </div>
+      `;
+    }
+  }).join("");
+
+  // Blocos detalhados de falha (Expected vs Received)
+  const failureBlocksHtml = failuresDetail.map(f => {
+    const argsFormatted = f.args.map(formatValue).join(", ");
+    return `
+      <div class="jest-failure-block">
+        <div class="jest-failure-title">● ${escapeHtml(challenge.functionName)} › ${escapeHtml(f.desc)}</div>
+        <div class="jest-failure-matcher">
+          expect(received).toBe(expected) // Chamada: ${challenge.functionName}(${escapeHtml(argsFormatted)})
+        </div>
+        <div class="jest-diff-row jest-diff-expected">
+          - Expected: ${escapeHtml(formatValue(f.expected))}
+        </div>
+        <div class="jest-diff-row jest-diff-received">
+          + Received: ${escapeHtml(formatValue(f.received))}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  // Sumário do Jest
+  const suiteSummaryText = allPassed
+    ? `<span class="jest-val-green">1 passed</span>, 1 total`
+    : `<span class="jest-val-red">1 failed</span>, 1 total`;
+
+  let testsSummaryText = "";
+  if (allPassed) {
+    testsSummaryText = `<span class="jest-val-green">${passedCount} passed</span>, ${challenge.testCases.length} total`;
+  } else {
+    testsSummaryText = `<span class="jest-val-red">${failedCount} failed</span>, <span class="jest-val-green">${passedCount} passed</span>, ${challenge.testCases.length} total`;
+  }
+
+  // 4. Lógica de Desbloqueio e Banner de Avanço
+  let unlockHtml = "";
+  if (allPassed) {
     updateStatusDot("success");
-    const wasAlreadyCompleted = State.isCompleted(challenge.id);
-
-    // Marca como concluído e desbloqueia o próximo
     State.markCompleted(challenge.id);
     updateUiState();
 
-    appendTerminalLine(
-      "log-success log-summary",
-      `🎉 PARABÉNS! Você passou em todos os ${totalCount} testes deste desafio!`
-    );
-
-    // Se houver próximo desafio, exibe banner com botão de avanço imediato
     if (challenge.id < CHALLENGES.length) {
       const nextChallenge = CHALLENGES.find(c => c.id === challenge.id + 1);
-      
-      const bannerHtml = `
+      unlockHtml = `
         <div class="unlock-card">
           <div class="unlock-card-text">
-            <span class="unlock-card-title">🔓 Desafio ${nextChallenge.id} Desbloqueado: ${escapeHtml(nextChallenge.title)}</span>
-            <span class="unlock-card-desc">Você completou o desafio anterior com sucesso e pode avançar na trilha!</span>
+            <span class="unlock-card-title">🎉 Testes Aprovados! Desafio ${nextChallenge.id} Desbloqueado: ${escapeHtml(nextChallenge.title)}</span>
+            <span class="unlock-card-desc">Todos os testes passaram no Jest. Avance para o próximo desafio da trilha!</span>
           </div>
           <button id="btn-advance-now" class="btn-advance">
             Avançar para o Desafio ${nextChallenge.id} ➔
           </button>
         </div>
       `;
-      appendTerminalLine("terminal-line", bannerHtml);
-
-      const advanceBtn = document.getElementById("btn-advance-now");
-      if (advanceBtn) {
-        advanceBtn.addEventListener("click", () => {
-          switchToChallenge(nextChallenge.id);
-        });
-      }
     } else {
-      appendTerminalLine(
-        "log-success log-summary",
-        `🏆 FANTÁSTICO! VOCÊ COMPLETOU TODOS OS 10 DESAFIOS DA TRILHA DE JAVASCRIPT! 🌟`
-      );
+      unlockHtml = `
+        <div class="unlock-card" style="border-color: #f7df1e;">
+          <div class="unlock-card-text">
+            <span class="unlock-card-title" style="color: #f7df1e;">🏆 PARABÉNS! VOCÊ CONCLUIU TODOS OS 10 DESAFIOS!</span>
+            <span class="unlock-card-desc" style="color: #ffffff;">Você completou com 100% de sucesso todos os testes unitários da Trilha de JavaScript!</span>
+          </div>
+        </div>
+      `;
     }
   } else {
     updateStatusDot("failed");
-    appendTerminalLine(
-      "log-failure log-summary",
-      `❌ ${passedCount} de ${totalCount} testes passaram. Para desbloquear o próximo desafio, corrija os erros e alcance 100% de aprovação.`
-    );
   }
+
+  // 5. Injeção final no console do terminal
+  dom.terminalOutput.innerHTML = `
+    <div class="jest-report">
+      <div class="jest-suite-header">
+        ${suiteBadge}
+        <span class="jest-file-path">${fileName}</span>
+      </div>
+
+      <div class="jest-suite-name">${escapeHtml(challenge.functionName)}</div>
+      ${testRowsHtml}
+
+      ${failureBlocksHtml}
+
+      <div class="jest-summary">
+        <div class="jest-summary-line">
+          <span class="jest-summary-label">Test Suites:</span>
+          ${suiteSummaryText}
+        </div>
+        <div class="jest-summary-line">
+          <span class="jest-summary-label">Tests:</span>
+          ${testsSummaryText}
+        </div>
+        <div class="jest-summary-line">
+          <span class="jest-summary-label">Snapshots:</span>
+          <span class="jest-val-muted">0 total</span>
+        </div>
+        <div class="jest-summary-line">
+          <span class="jest-summary-label">Time:</span>
+          <span class="jest-val-muted">${totalTimeSec} s</span>
+        </div>
+        <div class="jest-footer-ran">Ran all test suites matching /${challenge.functionName}/i.</div>
+      </div>
+
+      ${unlockHtml}
+    </div>
+  `;
+
+  // Vincula o botão de avançar caso exista
+  const advanceBtn = document.getElementById("btn-advance-now");
+  if (advanceBtn) {
+    advanceBtn.addEventListener("click", () => {
+      switchToChallenge(challenge.id + 1);
+    });
+  }
+
+  // Rola para o topo do relatório
+  dom.terminalOutput.scrollTop = 0;
 }
 
 /* ============================================================================
-   10. MODAL ROADMAP & EVENT LISTENERS
+   9. MODAL ROADMAP & EVENT LISTENERS
    ============================================================================ */
 function openRoadmap() {
   renderRoadmapGrid();
@@ -858,13 +960,9 @@ function closeRoadmap() {
 }
 
 function setupEventListeners() {
-  // Executar testes
   dom.runBtn.addEventListener("click", executeTestSuite);
-
-  // Limpar Terminal
   dom.clearConsoleBtn.addEventListener("click", clearTerminal);
 
-  // Resetar Código do desafio atual
   dom.resetCodeBtn.addEventListener("click", () => {
     const current = getCurrentChallenge();
     const confirmed = confirm(`Deseja restaurar o código inicial do Desafio ${current.id}?`);
@@ -873,12 +971,10 @@ function setupEventListeners() {
       if (monacoEditorInstance) {
         monacoEditorInstance.setValue(current.initialCode);
       }
-      clearTerminal();
-      appendTerminalLine("text-muted", "Código restaurado para o template original.");
+      executeTestSuite();
     }
   });
 
-  // Botões de Navegação Rápida
   dom.prevBtn.addEventListener("click", () => {
     if (State.currentId > 1) {
       switchToChallenge(State.currentId - 1);
@@ -891,14 +987,12 @@ function setupEventListeners() {
     }
   });
 
-  // Modal do Roadmap
   dom.openRoadmapBtn.addEventListener("click", openRoadmap);
   dom.closeRoadmapBtn.addEventListener("click", closeRoadmap);
   dom.roadmapModal.addEventListener("click", (e) => {
     if (e.target === dom.roadmapModal) closeRoadmap();
   });
 
-  // Resetar Trilha Toda
   dom.resetAllBtn.addEventListener("click", () => {
     const confirmed = confirm(
       "⚠️ ATENÇÃO: Deseja realmente reiniciar toda a sua trilha?\n\nIsso apagará o progresso de desbloqueio e todos os códigos salvos dos 10 desafios."
@@ -911,15 +1005,10 @@ function setupEventListeners() {
         monacoEditorInstance.setValue(firstChallenge.initialCode);
       }
       updateUiState();
-      clearTerminal();
-      appendTerminalLine(
-        "text-muted",
-        "Trilha reiniciada com sucesso! Comece resolvendo o Desafio 1."
-      );
+      executeTestSuite();
     }
   });
 
-  // Fechar modal com tecla ESC
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !dom.roadmapModal.classList.contains("hidden")) {
       closeRoadmap();
@@ -928,7 +1017,7 @@ function setupEventListeners() {
 }
 
 /* ============================================================================
-   11. INICIALIZAÇÃO DA APLICAÇÃO
+   10. INICIALIZAÇÃO DA APLICAÇÃO
    ============================================================================ */
 document.addEventListener("DOMContentLoaded", () => {
   State.load();

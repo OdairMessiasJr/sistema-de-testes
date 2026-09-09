@@ -7,7 +7,7 @@
   <!-- Google Fonts: Inter & Fira Code -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -19,7 +19,7 @@
         <span class="brand-icon">⚡</span>
         <div class="brand-text">
           <span class="brand-name">JS Code Quest</span>
-          <span class="brand-subtitle">Trilha de Fundamentos</span>
+          <span class="brand-subtitle">Trilha de Fundamentos & Testes</span>
         </div>
       </div>
 
@@ -74,52 +74,56 @@
         </header>
 
         <div class="panel-body" id="challenge-body">
-          <!-- Conteúdo detalhado (problema, regras, assinatura, tabela) injetado pelo script.js -->
+          <!-- Conteúdo detalhado injetado pelo script.js -->
         </div>
       </aside>
 
-      <!-- COLUNA DIREITA: MONACO EDITOR & TERMINAL -->
+      <!-- COLUNA DIREITA: MONACO EDITOR (SUPERIOR) & TERMINAL JEST (INFERIOR) -->
       <main class="right-panel">
-        <!-- Barra de Abas do Editor -->
-        <div class="editor-header">
-          <div class="tab-active">
-            <span class="file-icon">JS</span>
-            <span id="editor-tab-name">solucao.js</span>
-            <span id="editor-saved-status" class="saved-tag">salvo</span>
+        
+        <!-- Editor Section -->
+        <div class="editor-section">
+          <div class="editor-header">
+            <div class="tab-active">
+              <span class="file-icon">JS</span>
+              <span id="editor-tab-name">solucao.js</span>
+              <span id="editor-saved-status" class="saved-tag">salvo</span>
+            </div>
+            <div class="editor-actions">
+              <button id="reset-code-btn" class="btn btn-secondary" title="Restaurar template original deste desafio">
+                ↺ Resetar Código
+              </button>
+              <button id="run-btn" class="btn btn-primary" title="Executar testes unitários (Ctrl+Enter)">
+                ▶ Executar Testes
+              </button>
+            </div>
           </div>
-          <div class="editor-actions">
-            <button id="reset-code-btn" class="btn btn-secondary" title="Restaurar template original deste desafio">
-              ↺ Resetar Código
-            </button>
-            <button id="run-btn" class="btn btn-primary" title="Executar testes unitários (Ctrl+Enter)">
-              ▶ Executar Testes
-            </button>
+
+          <!-- Container do Monaco Editor -->
+          <div id="monaco-container" class="monaco-wrapper"></div>
+        </div>
+
+        <!-- Terminal Section (Resultados dos Testes estilo Jest) -->
+        <div class="terminal-panel">
+          <div class="terminal-header">
+            <div class="terminal-title-group">
+              <span class="terminal-indicator" id="terminal-status-dot"></span>
+              <span class="terminal-title">Test Runner (Jest Environment)</span>
+              <span class="shortcut-badge">Ctrl + Enter</span>
+            </div>
+            <div class="terminal-actions">
+              <button id="clear-console-btn" class="btn-clear" title="Limpar terminal">
+                Limpar
+              </button>
+            </div>
+          </div>
+
+          <!-- Console de Saída dos Testes -->
+          <div id="terminal-output" class="terminal-console">
+            <!-- Os resultados dos testes em formato Jest serão injetados aqui -->
           </div>
         </div>
 
-        <!-- Container do Monaco Editor -->
-        <div id="monaco-container" class="monaco-wrapper"></div>
-
-        <!-- Barra de Controle do Terminal -->
-        <div class="terminal-header">
-          <div class="terminal-title-group">
-            <span class="terminal-indicator" id="terminal-status-dot"></span>
-            <span class="terminal-title">Terminal de Testes</span>
-            <span class="shortcut-badge">Ctrl + Enter</span>
-          </div>
-          <div class="terminal-actions">
-            <button id="clear-console-btn" class="btn-clear" title="Limpar mensagens do terminal">
-              Limpar
-            </button>
-          </div>
-        </div>
-
-        <!-- Terminal / Console de Saída -->
-        <div id="terminal-output" class="terminal-console">
-          <div class="terminal-line text-muted">
-            Selecione um desafio e clique em "▶ Executar Testes" ou use o atalho Ctrl+Enter para testar sua solução.
-          </div>
-        </div>
       </main>
 
     </div>
@@ -136,7 +140,7 @@
         </div>
         <div class="modal-body">
           <div class="challenge-grid" id="challenge-grid">
-            <!-- Os 10 cards de desafios gerados dinamicamente com status [Concluído | Disponível | Bloqueado] -->
+            <!-- Os 10 cards gerados dinamicamente -->
           </div>
         </div>
       </div>

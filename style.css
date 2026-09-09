@@ -1,33 +1,34 @@
 /* ==========================================================================
-   RESET & VARIÁVEIS DO TEMA (VS CODE DARK MODE)
+   RESET & VARIÁVEIS DO TEMA (VS CODE & JEST DARK THEME)
    ========================================================================== */
 :root {
   --bg-main: #1e1e1e;
   --bg-sidebar: #252526;
   --bg-header: #2d2d2d;
-  --bg-terminal: #141414;
+  --bg-terminal: #0d1117; /* Fundo estilo GitHub/Jest Dark */
   --bg-tab-active: #1e1e1e;
   --bg-code: #2d2d30;
-  --border-color: #333333;
+  --border-color: #30363d;
   --border-light: #3e3e42;
 
-  --text-primary: #cccccc;
+  --text-primary: #c9d1d9;
   --text-bright: #ffffff;
-  --text-muted: #858585;
-  --text-accent: #4fc1ff;
+  --text-muted: #8b949e;
+  --text-accent: #58a6ff;
 
   --accent-green: #238636;
   --accent-green-hover: #2ea043;
-  --accent-blue: #0e639c;
-  --accent-blue-hover: #1177bb;
+  --accent-blue: #1f6feb;
+  --accent-blue-hover: #388bfd;
 
-  --status-success: #4ec9b0;
-  --status-success-bg: rgba(78, 201, 176, 0.12);
-  --status-failure: #f14c4c;
-  --status-failure-bg: rgba(241, 76, 76, 0.12);
-  --status-warning: #cca700;
-  --status-warning-bg: rgba(204, 167, 0, 0.12);
-  --status-info: #9cdcfe;
+  /* Jest Brand Colors */
+  --jest-pass-bg: #238636;
+  --jest-pass-text: #ffffff;
+  --jest-fail-bg: #da3633;
+  --jest-fail-text: #ffffff;
+  --jest-green: #3fb950;
+  --jest-red: #f85149;
+  --jest-yellow: #d29922;
 
   --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-code: 'Fira Code', Consolas, Monaco, 'Courier New', monospace;
@@ -52,7 +53,7 @@ body {
 }
 
 /* ==========================================================================
-   ESTRUTURA GERAL (LAYOUT FULLSCREEN)
+   ESTRUTURA GERAL (LAYOUT FULLSCREEN 100VH)
    ========================================================================== */
 .app-layout {
   display: flex;
@@ -67,6 +68,7 @@ body {
    ========================================================================== */
 .top-navbar {
   height: 52px;
+  min-height: 52px;
   background-color: var(--bg-sidebar);
   border-bottom: 1px solid var(--border-color);
   display: flex;
@@ -187,7 +189,7 @@ body {
 
 .progress-val {
   font-weight: 600;
-  color: var(--status-success);
+  color: var(--jest-green);
 }
 
 .progress-bar-bg {
@@ -201,12 +203,11 @@ body {
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #238636, #4ec9b0);
+  background: linear-gradient(90deg, #238636, #3fb950);
   transition: width 0.4s ease;
   border-radius: 3px;
 }
 
-/* Ações Topo */
 .top-actions {
   display: flex;
   align-items: center;
@@ -224,9 +225,9 @@ body {
 }
 
 .btn-ghost-danger:hover {
-  color: var(--status-failure);
-  border-color: rgba(241, 76, 76, 0.3);
-  background-color: var(--status-failure-bg);
+  color: var(--jest-red);
+  border-color: rgba(248, 81, 73, 0.3);
+  background-color: rgba(248, 81, 73, 0.1);
 }
 
 /* ==========================================================================
@@ -250,7 +251,7 @@ body {
   border-right: 1px solid var(--border-color);
 }
 
-/* Painel Direito: Editor & Console */
+/* Painel Direito: Dividido entre Editor e Terminal */
 .right-panel {
   flex: 1 1 50%;
   min-width: 0;
@@ -258,6 +259,7 @@ body {
   display: flex;
   flex-direction: column;
   background-color: var(--bg-main);
+  overflow: hidden;
 }
 
 /* ==========================================================================
@@ -286,9 +288,9 @@ body {
 }
 
 .badge-difficulty {
-  background-color: rgba(78, 201, 176, 0.15);
-  color: var(--status-success);
-  border: 1px solid rgba(78, 201, 176, 0.3);
+  background-color: rgba(63, 185, 80, 0.15);
+  color: var(--jest-green);
+  border: 1px solid rgba(63, 185, 80, 0.3);
 }
 
 .badge-lang {
@@ -298,9 +300,9 @@ body {
 }
 
 .badge-topic {
-  background-color: rgba(79, 193, 255, 0.15);
+  background-color: rgba(88, 166, 255, 0.15);
   color: var(--text-accent);
-  border: 1px solid rgba(79, 193, 255, 0.3);
+  border: 1px solid rgba(88, 166, 255, 0.3);
 }
 
 .challenge-title {
@@ -426,8 +428,8 @@ code {
 .tag-expected {
   font-family: var(--font-code);
   font-weight: 600;
-  color: var(--status-success);
-  background: var(--status-success-bg);
+  color: var(--jest-green);
+  background: rgba(63, 185, 80, 0.15);
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -437,7 +439,7 @@ code {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  background-color: rgba(79, 193, 255, 0.08);
+  background-color: rgba(88, 166, 255, 0.08);
   border-left: 3px solid var(--text-accent);
   border-radius: 0 6px 6px 0;
   padding: 12px 14px;
@@ -450,12 +452,20 @@ code {
 }
 
 /* ==========================================================================
-   COLUNA DIREITA: MONACO EDITOR & TERMINAL
+   COLUNA DIREITA (PARTE SUPERIOR): MONACO EDITOR
    ========================================================================== */
+.editor-section {
+  flex: 1 1 54%;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 2px solid var(--border-color);
+  overflow: hidden;
+}
 
-/* Barra de Abas do Editor */
 .editor-header {
-  height: 40px;
+  height: 38px;
+  min-height: 38px;
   background-color: var(--bg-header);
   border-bottom: 1px solid var(--border-color);
   display: flex;
@@ -541,19 +551,31 @@ code {
   color: var(--text-bright);
 }
 
-/* Container Monaco: ocupa ~60% */
+/* Monaco Wrapper dentro da editor-section */
 .monaco-wrapper {
-  height: 60%;
+  flex: 1;
+  min-height: 0;
   width: 100%;
   position: relative;
   background-color: var(--bg-main);
-  border-bottom: 1px solid var(--border-color);
 }
 
-/* Barra do Terminal */
+/* ==========================================================================
+   COLUNA DIREITA (PARTE INFERIOR): TERMINAL ESTILO JEST
+   ========================================================================== */
+.terminal-panel {
+  flex: 1 1 46%;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-terminal);
+  overflow: hidden;
+}
+
 .terminal-header {
   height: 35px;
-  background-color: var(--bg-header);
+  min-height: 35px;
+  background-color: #161b22;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
@@ -572,33 +594,33 @@ code {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #6a737d;
+  background-color: #484f58;
   transition: background-color 0.3s ease;
 }
 
 .terminal-indicator.success {
-  background-color: var(--status-success);
-  box-shadow: 0 0 6px var(--status-success);
+  background-color: var(--jest-green);
+  box-shadow: 0 0 6px var(--jest-green);
 }
 
 .terminal-indicator.failed {
-  background-color: var(--status-failure);
-  box-shadow: 0 0 6px var(--status-failure);
+  background-color: var(--jest-red);
+  box-shadow: 0 0 6px var(--jest-red);
 }
 
 .terminal-title {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--text-primary);
+  color: var(--text-muted);
 }
 
 .shortcut-badge {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--text-muted);
   background-color: var(--bg-code);
-  padding: 2px 6px;
+  padding: 1px 6px;
   border-radius: 3px;
   border: 1px solid var(--border-light);
 }
@@ -607,7 +629,7 @@ code {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 11.5px;
   cursor: pointer;
   padding: 3px 8px;
   border-radius: 3px;
@@ -616,93 +638,196 @@ code {
 
 .btn-clear:hover {
   color: var(--text-bright);
-  background-color: var(--bg-code);
+  background-color: #21262d;
 }
 
 /* Console do Terminal */
 .terminal-console {
   flex: 1;
+  min-height: 0;
   background-color: var(--bg-terminal);
-  padding: 12px 16px;
+  padding: 14px 18px;
   overflow-y: auto;
   font-family: var(--font-code);
   font-size: 12.5px;
   line-height: 1.6;
   display: flex;
   flex-direction: column;
+}
+
+/* ==========================================================================
+   ESTILOS JEST (TEST RUNNER OUTPUT)
+   ========================================================================== */
+.jest-report {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
+  animation: fadeIn 0.2s ease;
 }
 
-.terminal-line {
-  word-break: break-word;
-  white-space: pre-wrap;
+/* Header com PASS / FAIL */
+.jest-suite-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
-.text-muted {
+.jest-badge-pass {
+  background-color: var(--jest-pass-bg);
+  color: var(--jest-pass-text);
+  font-weight: 700;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+.jest-badge-fail {
+  background-color: var(--jest-fail-bg);
+  color: var(--jest-fail-text);
+  font-weight: 700;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+.jest-file-path {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Nome da Suíte de Testes (describe) */
+.jest-suite-name {
+  color: var(--text-bright);
+  font-weight: 600;
+  padding-left: 8px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+/* Linhas dos Testes Individuais */
+.jest-test-row {
+  padding-left: 20px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 2px 0;
+}
+
+.jest-icon-pass {
+  color: var(--jest-green);
+  font-weight: bold;
+}
+
+.jest-icon-fail {
+  color: var(--jest-red);
+  font-weight: bold;
+}
+
+.jest-desc-pass {
   color: var(--text-muted);
 }
 
-.log-info {
-  color: var(--status-info);
+.jest-desc-fail {
+  color: var(--jest-red);
 }
 
-.log-success {
-  color: var(--status-success);
+.jest-duration {
+  color: #6e7681;
+  font-size: 11px;
+  margin-left: 4px;
 }
 
-.log-failure {
-  color: var(--status-failure);
+/* Bloco de Detalhes de Falha (Jest Expected vs Received) */
+.jest-failure-block {
+  margin: 8px 0 8px 16px;
+  padding: 10px 14px;
+  background-color: rgba(218, 54, 51, 0.08);
+  border-left: 3px solid var(--jest-red);
+  border-radius: 0 4px 4px 0;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
-.log-error {
-  color: #ff6b6b;
-  background-color: var(--status-failure-bg);
-  padding: 6px 10px;
-  border-left: 3px solid var(--status-failure);
-  border-radius: 2px;
-}
-
-.log-summary {
+.jest-failure-title {
+  color: var(--jest-red);
   font-weight: 600;
-  margin-top: 6px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--border-light);
+  margin-bottom: 6px;
 }
 
-.badge-tag {
-  display: inline-block;
-  font-weight: 700;
-  font-size: 10.5px;
-  padding: 1px 5px;
-  border-radius: 3px;
-  margin-right: 6px;
+.jest-failure-matcher {
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 6px;
 }
 
-.badge-pass {
-  background-color: var(--status-success-bg);
-  color: var(--status-success);
-  border: 1px solid rgba(78, 201, 176, 0.3);
+.jest-diff-row {
+  font-family: var(--font-code);
+  margin: 2px 0;
 }
 
-.badge-fail {
-  background-color: var(--status-failure-bg);
-  color: var(--status-failure);
-  border: 1px solid rgba(241, 76, 76, 0.3);
+.jest-diff-expected {
+  color: var(--jest-green);
 }
 
-.badge-err {
-  background-color: rgba(255, 107, 107, 0.2);
-  color: #ff6b6b;
-  border: 1px solid rgba(255, 107, 107, 0.4);
+.jest-diff-received {
+  color: var(--jest-red);
 }
 
-/* Banner de Desbloqueio e Sucesso no Terminal */
+/* Sumário do Jest no rodapé */
+.jest-summary {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid #21262d;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+}
+
+.jest-summary-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.jest-summary-label {
+  color: var(--text-muted);
+  width: 95px;
+  font-weight: 500;
+}
+
+.jest-val-green {
+  color: var(--jest-green);
+  font-weight: 600;
+}
+
+.jest-val-red {
+  color: var(--jest-red);
+  font-weight: 600;
+}
+
+.jest-val-muted {
+  color: var(--text-muted);
+}
+
+.jest-footer-ran {
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Banner de Desbloqueio e Sucesso */
 .unlock-card {
-  margin-top: 10px;
-  background: linear-gradient(135deg, rgba(35, 134, 54, 0.2), rgba(14, 99, 156, 0.2));
+  margin-top: 12px;
+  background: linear-gradient(135deg, rgba(35, 134, 54, 0.25), rgba(31, 111, 235, 0.25));
   border: 1px solid var(--accent-green);
   border-radius: 6px;
-  padding: 14px;
+  padding: 12px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -713,28 +838,28 @@ code {
 .unlock-card-text {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .unlock-card-title {
   color: #ffffff;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
 }
 
 .unlock-card-desc {
-  color: var(--status-info);
-  font-size: 12px;
+  color: #7ee787;
+  font-size: 11.5px;
 }
 
 .btn-advance {
   background-color: var(--accent-blue);
   color: #ffffff;
   border: none;
-  padding: 8px 16px;
+  padding: 7px 14px;
   border-radius: 4px;
   font-weight: 600;
-  font-size: 12.5px;
+  font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s;
@@ -881,6 +1006,24 @@ code {
   border-radius: 4px;
 }
 
+.badge-tag {
+  background-color: rgba(88, 166, 255, 0.15);
+  color: var(--text-accent);
+  border: 1px solid rgba(88, 166, 255, 0.3);
+}
+
+.badge-pass {
+  background-color: rgba(63, 185, 80, 0.15);
+  color: var(--jest-green);
+  border: 1px solid rgba(63, 185, 80, 0.3);
+}
+
+.badge-fail {
+  background-color: rgba(248, 81, 73, 0.15);
+  color: var(--jest-red);
+  border: 1px solid rgba(248, 81, 73, 0.3);
+}
+
 /* Card States */
 .grid-card.completed {
   border-color: rgba(35, 134, 54, 0.5);
@@ -888,17 +1031,17 @@ code {
 }
 
 .grid-card.completed:hover {
-  border-color: var(--status-success);
+  border-color: var(--jest-green);
   background-color: #242424;
 }
 
 .grid-card.completed .grid-card-num {
-  background-color: var(--status-success-bg);
-  color: var(--status-success);
+  background-color: rgba(63, 185, 80, 0.15);
+  color: var(--jest-green);
 }
 
 .grid-card.unlocked {
-  border-color: rgba(14, 99, 156, 0.6);
+  border-color: rgba(31, 111, 235, 0.5);
   cursor: pointer;
 }
 
@@ -908,7 +1051,7 @@ code {
 }
 
 .grid-card.unlocked .grid-card-num {
-  background-color: rgba(79, 193, 255, 0.15);
+  background-color: rgba(88, 166, 255, 0.15);
   color: var(--text-accent);
 }
 
@@ -920,14 +1063,14 @@ code {
 
 .grid-card.active-card {
   outline: 2px solid var(--text-accent);
-  box-shadow: 0 0 10px rgba(79, 193, 255, 0.3);
+  box-shadow: 0 0 10px rgba(88, 166, 255, 0.3);
 }
 
 /* ==========================================================================
    ANIMAÇÕES & SCROLLBAR
    ========================================================================== */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -985,10 +1128,10 @@ code {
     height: auto;
     min-height: 520px;
   }
-  .monaco-wrapper {
+  .editor-section {
     height: 380px;
   }
-  .terminal-console {
-    height: 240px;
+  .terminal-panel {
+    height: 320px;
   }
 }
